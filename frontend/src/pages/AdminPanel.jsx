@@ -2,12 +2,21 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import http from "../api/http";
 import socket from "../api/socket";
+import { useAuthStore } from "../store/authStore";
+import ChangePasswordModal from "../components/ChangePasswordModal.jsx";
 
 export default function AdminPanel() {
   const [queues, setQueues] = useState([]);
   const [feed,   setFeed]   = useState([]);
   const [served, setServed] = useState(0);
+  const [showPwModal, setShowPwModal] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   const addFeed = (color, text) =>
     setFeed((f) => [{ color, text, time:"ahora" }, ...f].slice(0, 8));
@@ -55,18 +64,47 @@ export default function AdminPanel() {
   const totalWaiting = queues.reduce((acc, q) =>
     acc + (q.turns?.filter((t) => t.status === "WAITING").length ?? 0), 0);
 
+  // Calcular el promedio de minutos por persona según si hay retrasos activos en alguna fila
+  const anyDelayed = queues.some((q) => q.isDelayed);
+  const avgMins = anyDelayed ? "8.5" : "4.5";
+
   return (
     <div className="page-wide">
-      <div className="nav-tabs">
-        <button className="nav-tab active">📊 Panel Admin</button>
-        <button className="nav-tab" onClick={() => navigate("/canasta")}>🎁 Canasta</button>
-        <button className="nav-tab" onClick={() => navigate("/join")}>🎫 Vista alumno</button>
+      <div className="nav-tabs" style={{ justifyContent:"space-between", paddingRight:12 }}>
+        <div style={{ display:"flex", flex:1 }}>
+          <button className="nav-tab active">📊 Panel Admin</button>
+          <button className="nav-tab" onClick={() => navigate("/canasta")}>🎁 Canasta</button>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          {user && (
+            <span style={{ fontSize:12, color:"var(--gray-400)", fontWeight:500 }}>
+              👤 {user.name}
+            </span>
+          )}
+          <button
+            className="btn-logout"
+            style={{ background: "rgba(55, 138, 221, 0.1)", color: "var(--blue)", borderColor: "var(--blue-border)", padding: "7px 10px" }}
+            onClick={() => setShowPwModal(true)}
+            title="Cambiar contraseña"
+          >
+            🔑 Clave
+          </button>
+          <button
+            id="admin-logout-btn"
+            className="btn-logout"
+            onClick={handleLogout}
+          >
+            ⬅ Salir
+          </button>
+        </div>
       </div>
+
+      {showPwModal && <ChangePasswordModal onClose={() => setShowPwModal(false)} />}
 
       <div className="metrics-grid">
         <div className="metric-box"><p className="metric-val">{totalWaiting}</p><p className="metric-lbl">Total en espera</p></div>
         <div className="metric-box"><p className="metric-val">{served}</p><p className="metric-lbl">Atendidos hoy</p></div>
-        <div className="metric-box"><p className="metric-val">~3</p><p className="metric-lbl">Min promedio</p></div>
+        <div className="metric-box"><p className="metric-val">~{avgMins}</p><p className="metric-lbl">Min promedio</p></div>
         <div className="metric-box"><p className="metric-val">{queues.filter((q) => q.isActive).length}</p><p className="metric-lbl">Filas activas</p></div>
       </div>
 
@@ -81,12 +119,15 @@ export default function AdminPanel() {
                   {q.isDelayed ? "Retraso" : "Activa"}
                 </span>
               </div>
-              {waiting.slice(0, 4).map((t, i) => (
-                <div className={`q-row ${i === 0 ? "q-row-first" : ""}`} key={t.id}>
-                  <span className="q-num">#{t.ticketNumber}</span>
-                  <span className="q-time">{i === 0 ? "Próximo" : `~${i * 3} min`}</span>
-                </div>
-              ))}
+              {waiting.slice(0, 4).map((t, i) => {
+                const mins = q.isDelayed ? 8.5 : 4.5;
+                return (
+                  <div className={`q-row ${i === 0 ? "q-row-first" : ""}`} key={t.id}>
+                    <span className="q-num">#{t.ticketNumber}</span>
+                    <span className="q-time">{i === 0 ? "Próximo" : `~${Math.round(i * mins)} min`}</span>
+                  </div>
+                );
+              })}
               {waiting.length === 0 && (
                 <p style={{ fontSize:12, color:"var(--gray-400)", padding:"6px 0" }}>Sin turnos</p>
               )}

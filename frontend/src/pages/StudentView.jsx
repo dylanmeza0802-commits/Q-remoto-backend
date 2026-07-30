@@ -23,9 +23,10 @@ export default function StudentView() {
     ? waitingTurns.findIndex((t) => t.id === myTurn.id) + 1
     : null;
 
-  // minutos reales basados en posición actual
-  const minsPerPerson = activeQueue?.minsPerPerson ?? 3;
-  const waitMinutes   = myPosition > 0 ? (myPosition - 1) * minsPerPerson : 0;
+  // minutos reales basados en el modelo matemático de colas (4.5 min normal, 8.5 min con retraso)
+  const isDelayedNow = activeQueue?.isDelayed || isDelayed;
+  const minsPerPerson = isDelayedNow ? 8.5 : 4.5;
+  const waitMinutes   = myPosition > 0 ? Math.round((myPosition - 1) * minsPerPerson) : 0;
 
   // turno siguiente al mío (para ceder)
   const myIdx   = waitingTurns.findIndex((t) => t.id === myTurn?.id);

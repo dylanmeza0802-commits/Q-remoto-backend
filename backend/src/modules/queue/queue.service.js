@@ -46,7 +46,11 @@ export const QueueService = {
 
     const ticketNumber = (lastTurn?.ticketNumber ?? 0) + 1;
     const position = await prisma.turn.count({ where: { queueId, status: 'WAITING' } });
-    const waitMinutes = position * 3; // 3 min promedio por persona
+    
+    // Si la fila está en retraso, el tiempo de servicio efectivo aumenta por estudiante
+    // (de 4.5 minutos promedio sube a 8.5 minutos para reflejar el cuello de botella)
+    const serviceRate = queue.isDelayed ? 8.5 : 4.5;
+    const waitMinutes = Math.round(position * serviceRate);
 
     const turn = await prisma.turn.create({
       data: { ticketNumber, userId, queueId, status: 'WAITING', waitMinutes },

@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueueStore } from "../store/queueStore";
+import { useAuthStore } from "../store/authStore";
 import http from "../api/http";
+import ChangePasswordModal from "../components/ChangePasswordModal.jsx";
 
 export default function JoinQueue() {
   const [queues,   setQueues]   = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading,  setLoading]  = useState(false);
+  const [showPwModal, setShowPwModal] = useState(false);
   const { setMyTurn } = useQueueStore();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,6 +40,11 @@ export default function JoinQueue() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div className="page">
       <div className="topbar">
@@ -43,10 +52,30 @@ export default function JoinQueue() {
           <p className="topbar-title">🎫 Q-Remoto</p>
           <p className="topbar-sub">Comedor UNSAAC</p>
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--green)", fontWeight:600 }}>
-          <span className="live-dot" /> En vivo
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"var(--green)", fontWeight:600 }}>
+            <span className="live-dot" /> En vivo
+          </div>
+          <button
+            className="btn-logout"
+            style={{ background: "rgba(55, 138, 221, 0.1)", color: "var(--blue)", borderColor: "var(--blue-border)", padding: "7px 10px" }}
+            onClick={() => setShowPwModal(true)}
+            title="Cambiar contraseña"
+          >
+            🔑 Clave
+          </button>
+          <button
+            id="student-logout-btn"
+            className="btn-logout"
+            onClick={handleLogout}
+            title={`Cerrar sesión (${user?.name ?? ""})`}
+          >
+            ⬅ Salir
+          </button>
         </div>
       </div>
+
+      {showPwModal && <ChangePasswordModal onClose={() => setShowPwModal(false)} />}
 
       <div style={{ textAlign:"center", padding:"24px 0 20px" }}>
         <div style={{ width:60, height:60, borderRadius:"50%", background:"var(--blue-light)", border:"2px solid var(--blue-border)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px", fontSize:28 }}>
@@ -56,6 +85,11 @@ export default function JoinQueue() {
         <p style={{ fontSize:13, color:"var(--gray-400)", marginTop:6 }}>
           Elige la fila a la que quieres unirte
         </p>
+        {user && (
+          <p style={{ fontSize:12, color:"var(--blue)", marginTop:4, fontWeight:600 }}>
+            👋 Hola, {user.name}
+          </p>
+        )}
       </div>
 
       {queues.map((q) => (
@@ -67,7 +101,7 @@ export default function JoinQueue() {
           <div>
             <p className="queue-option-name">🚪 {q.name}</p>
             <p className="queue-option-info">
-              {q.turns?.length ?? 0} personas · ~{(q.turns?.length ?? 0) * 3} min espera
+              {q.turns?.length ?? 0} personas · ~{Math.round((q.turns?.length ?? 0) * (q.isDelayed ? 8.5 : 4.5))} min espera
             </p>
           </div>
           <span className={`badge ${q.isDelayed ? "badge-amber" : "badge-green"}`}>
@@ -83,14 +117,6 @@ export default function JoinQueue() {
         disabled={!selected || loading}
       >
         {loading ? "Uniéndose..." : "🎫 Unirme a la fila"}
-      </button>
-
-      <button
-        className="btn btn-ghost"
-        style={{ marginTop:8 }}
-        onClick={() => navigate("/admin")}
-      >
-        ⚙️ Ir al panel de administración
       </button>
     </div>
   );
