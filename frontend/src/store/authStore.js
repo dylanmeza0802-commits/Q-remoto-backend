@@ -10,8 +10,8 @@ const INITIAL_USERS = [
     name: "Alumno UNSAAC Principal",
     role: "student",
   },
-  // 10 Alumnos nuevos
-  ...Array.from({ length: 10 }, (_, i) => ({
+  // 50 Alumnos nuevos
+  ...Array.from({ length: 50 }, (_, i) => ({
     id: `u-student-${i + 1}`,
     email: `alumno${i + 1}@unsaac.edu.pe`,
     password: "alumno123",

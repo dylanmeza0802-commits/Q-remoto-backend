@@ -1,0 +1,28 @@
+services:
+  # ── Servicio Web (Backend Node.js) ──────────────────────────────
+  - type: web
+    name: q-remoto-backend
+    runtime: node
+    region: oregon          # Más cercano a Sudamérica disponible en plan gratuito
+    plan: free
+    rootDir: backend        # Si el repo tiene frontend/ y backend/ en la raíz
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: q-remoto-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true   # Render genera un valor aleatorio seguro automáticamente
+      - key: FRONTEND_URL
+        sync: false           # Lo ingresas manualmente después de desplegar el frontend en Vercel
+
+  # ── Base de Datos PostgreSQL ──────────────────────────────────────
+databases:
+  - name: q-remoto-db
+    databaseName: qremoto
+    user: qremoto_user
+    plan: free

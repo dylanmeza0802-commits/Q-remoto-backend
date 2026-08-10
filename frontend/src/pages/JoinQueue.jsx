@@ -18,10 +18,9 @@ export default function JoinQueue() {
     http.get("/queues")
       .then((r) => setQueues(r.data))
       .catch(() =>
+        // Por defecto: 1 fila (Piso 1). Al activar Piso 2 el admin habilita la segunda fila.
         setQueues([
-          { id:"q1", name:"Fila 1", laneNumber:1, isDelayed:false, turns:[] },
-          { id:"q2", name:"Fila 2", laneNumber:2, isDelayed:true,  turns:[] },
-          { id:"q3", name:"Fila 3", laneNumber:3, isDelayed:false, turns:[] },
+          { id:"q1", name:"Fila 1 — Piso 1", laneNumber:1, isDelayed:false, turns:[] },
         ])
       );
   }, []);
@@ -101,7 +100,15 @@ export default function JoinQueue() {
           <div>
             <p className="queue-option-name">🚪 {q.name}</p>
             <p className="queue-option-info">
-              {q.turns?.length ?? 0} personas · ~{Math.round((q.turns?.length ?? 0) * (q.isDelayed ? 8.5 : 4.5))} min espera
+              {q.turns?.length ?? 0} personas · {(() => {
+                const len = q.turns?.length ?? 0;
+                if (len === 0) return "0 min espera";
+                const baseMins = q.isDelayed ? 8.0 : 4.0;
+                const waitMins = baseMins + (len * (q.isDelayed ? 1.0 : 0.1));
+                const m = Math.floor(waitMins);
+                const s = Math.round((waitMins % 1) * 60);
+                return m === 0 ? `~${s} seg espera` : (s === 0 ? `~${m} min espera` : `~${m} min ${s} s espera`);
+              })()}
             </p>
           </div>
           <span className={`badge ${q.isDelayed ? "badge-amber" : "badge-green"}`}>

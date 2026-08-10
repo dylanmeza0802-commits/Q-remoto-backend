@@ -52,9 +52,9 @@ export default function CanastaConfig() {
                 </button>
               ))}
             </div>
-            <p className="card-title" style={{ marginTop:16 }}>Filas por piso (máx. 4)</p>
+            <p className="card-title" style={{ marginTop:16 }}>Filas por piso (máx. 2)</p>
             <div className="toggle-row">
-              {[1, 2, 3, 4].map((n) => (
+              {[1, 2].map((n) => (
                 <button key={n} className={`tog ${lanes === n ? "active" : ""}`} onClick={() => setLanes(n)}>
                   {n}
                 </button>

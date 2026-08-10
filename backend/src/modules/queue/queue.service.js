@@ -46,11 +46,22 @@ export const QueueService = {
 
     const ticketNumber = (lastTurn?.ticketNumber ?? 0) + 1;
     const position = await prisma.turn.count({ where: { queueId, status: 'WAITING' } });
+
+    /**
+     * Tiempo de cuello de botella calibrado para 2500 alumnos en 240 minutos:
+     * - Normal:  25 seg/alumno (promedio general) -> ~0.1 min (6 seg) escaneo
+     * - Retraso: 60 seg/alumno -> 1.0 min (validación manual, fallo del sistema)
+     */
+    const bottleneckMin = queue.isDelayed ? 1.0 : 0.1;
     
-    // Si la fila está en retraso, el tiempo de servicio efectivo aumenta por estudiante
-    // (de 4.5 minutos promedio sube a 8.5 minutos para reflejar el cuello de botella)
-    const serviceRate = queue.isDelayed ? 8.5 : 4.5;
-    const waitMinutes = Math.round(position * serviceRate);
+    /**
+     * Tiempo base del sistema (desde que entra hasta que se sienta)
+     * - Normal: 4 minutos (recibir bandeja, servir comida)
+     * - Retraso: 8 minutos (cambio de ollas, contratiempos)
+     */
+    const baseMin = queue.isDelayed ? 8.0 : 4.0;
+    
+    const waitMinutes = Math.round(baseMin + (position * bottleneckMin));
 
     const turn = await prisma.turn.create({
       data: { ticketNumber, userId, queueId, status: 'WAITING', waitMinutes },

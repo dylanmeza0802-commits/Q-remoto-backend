@@ -64,9 +64,13 @@ export default function AdminPanel() {
   const totalWaiting = queues.reduce((acc, q) =>
     acc + (q.turns?.filter((t) => t.status === "WAITING").length ?? 0), 0);
 
-  // Calcular el promedio de minutos por persona según si hay retrasos activos en alguna fila
+  // Cuello de botella calibrado: 0.1 min (6 seg) normal / 1.0 min (60 seg) con retraso
   const anyDelayed = queues.some((q) => q.isDelayed);
-  const avgMins = anyDelayed ? "8.5" : "4.5";
+  const avgMins    = anyDelayed ? "~60 seg" : "~6 seg";
+
+  // Alerta de capacidad: con 1 sola fila el sistema colapsa para 2500 alumnos
+  const activeQueueCount  = queues.filter((q) => q.isActive).length;
+  const capacityWarning   = activeQueueCount < 2;
 
   return (
     <div className="page-wide">
@@ -101,6 +105,22 @@ export default function AdminPanel() {
 
       {showPwModal && <ChangePasswordModal onClose={() => setShowPwModal(false)} />}
 
+      {capacityWarning && (
+        <div style={{
+          background:"linear-gradient(135deg,#7A1515,#E04B4B)", color:"#fff",
+          borderRadius:12, padding:"12px 16px", marginBottom:12,
+          display:"flex", alignItems:"center", gap:10, fontSize:13, fontWeight:600,
+        }}>
+          <span style={{ fontSize:20 }}>⚠️</span>
+          <div>
+            <p>Solo 1 fila activa — capacidad insuficiente para 2500 alumnos</p>
+            <p style={{ fontWeight:400, fontSize:11, marginTop:3, opacity:.85 }}>
+              Para servir 2500 alumnos en 240 min se necesitan las 2 filas. Activa el Piso 2.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="metrics-grid">
         <div className="metric-box"><p className="metric-val">{totalWaiting}</p><p className="metric-lbl">Total en espera</p></div>
         <div className="metric-box"><p className="metric-val">{served}</p><p className="metric-lbl">Atendidos hoy</p></div>
@@ -120,11 +140,19 @@ export default function AdminPanel() {
                 </span>
               </div>
               {waiting.slice(0, 4).map((t, i) => {
-                const mins = q.isDelayed ? 8.5 : 4.5;
+                const mins     = q.isDelayed ? 1.0 : 0.1;
+                const baseMins = q.isDelayed ? 8.0 : 4.0;
+                let timeText = "Próximo";
+                if (i > 0) {
+                  const waitMins = baseMins + (i * mins);
+                  const m = Math.floor(waitMins);
+                  const s = Math.round((waitMins % 1) * 60);
+                  timeText = m === 0 ? `~${s} seg` : (s === 0 ? `~${m} min` : `~${m} min ${s} s`);
+                }
                 return (
                   <div className={`q-row ${i === 0 ? "q-row-first" : ""}`} key={t.id}>
                     <span className="q-num">#{t.ticketNumber}</span>
-                    <span className="q-time">{i === 0 ? "Próximo" : `~${Math.round(i * mins)} min`}</span>
+                    <span className="q-time">{timeText}</span>
                   </div>
                 );
               })}

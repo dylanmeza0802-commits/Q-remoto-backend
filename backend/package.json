@@ -3,6 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/app.js",
+    "build": "prisma generate",
     "start": "node src/app.js",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
