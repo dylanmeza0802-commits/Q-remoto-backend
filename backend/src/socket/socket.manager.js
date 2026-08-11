@@ -10,19 +10,21 @@ export function initSocket(server) {
   io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
-        const localOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
-        const productionOrigin = process.env.FRONTEND_URL?.trim();
-        const allowed = productionOrigin
-          ? [...localOrigins, productionOrigin]
-          : localOrigins;
+        console.log(`[WS CORS] Origen recibido: ${origin ?? '(sin origen)'}`);
 
         if (!origin) return callback(null, true);
 
-        if (allowed.includes(origin)) {
+        const allowed =
+          origin === 'http://localhost:5173'  ||
+          origin === 'http://127.0.0.1:5173' ||
+          /\.vercel\.app$/.test(origin)       ||
+          (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL.trim());
+
+        if (allowed) {
           callback(null, true);
         } else {
-          console.warn(`[WS CORS] Origen bloqueado: ${origin}`);
-          callback(new Error(`WS CORS: origen no permitido → ${origin}`));
+          console.warn(`[WS CORS] Bloqueado: ${origin}`);
+          callback(null, false);
         }
       },
       credentials: true,

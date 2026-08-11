@@ -14,29 +14,24 @@ const app    = express();
 const server = http.createServer(app);
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
-// Usamos una función de origen dinámica para leer FRONTEND_URL en cada
-// petición, no solo al iniciar el proceso. Así los cambios en variables de
-// entorno en Render se aplican sin redeploy.
 const corsOptions = {
   origin: (origin, callback) => {
-    // Orígenes siempre permitidos (desarrollo local)
-    const localOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+    console.log(`[CORS] Origen recibido: ${origin ?? '(sin origen)'}`);
 
-    // Origen de producción leído en tiempo de ejecución desde la variable de entorno
-    const productionOrigin = process.env.FRONTEND_URL?.trim();
-
-    const allowed = productionOrigin
-      ? [...localOrigins, productionOrigin]
-      : localOrigins;
-
-    // Sin origen (peticiones server-to-server, curl, Postman, etc.) → permitir
+    // Sin origen → peticiones server-to-server, Postman, curl → permitir
     if (!origin) return callback(null, true);
 
-    if (allowed.includes(origin)) {
+    const allowed =
+      origin === 'http://localhost:5173'  ||
+      origin === 'http://127.0.0.1:5173' ||
+      /\.vercel\.app$/.test(origin)       || // cualquier subdominio de Vercel
+      (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL.trim());
+
+    if (allowed) {
       callback(null, true);
     } else {
-      console.warn(`[CORS] Origen bloqueado: ${origin}`);
-      callback(new Error(`CORS: origen no permitido → ${origin}`));
+      console.warn(`[CORS] Bloqueado: ${origin}`);
+      callback(null, false); // false → 403, NO lanzar Error (evita 500 en preflight)
     }
   },
   credentials: true,
