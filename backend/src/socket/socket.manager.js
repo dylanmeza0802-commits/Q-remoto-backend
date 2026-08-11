@@ -4,11 +4,27 @@ import { QueueService } from '../modules/queue/queue.service.js';
 let io;
 
 export function initSocket(server) {
+  // Socket.io necesita su propio CORS independiente del de Express.
+  // Usamos una función dinámica por la misma razón que en app.js:
+  // el valor de FRONTEND_URL se lee en cada handshake, no solo al arrancar.
   io = new Server(server, {
     cors: {
-      origin: process.env.FRONTEND_URL
-        ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://127.0.0.1:5173']
-        : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+      origin: (origin, callback) => {
+        const localOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+        const productionOrigin = process.env.FRONTEND_URL?.trim();
+        const allowed = productionOrigin
+          ? [...localOrigins, productionOrigin]
+          : localOrigins;
+
+        if (!origin) return callback(null, true);
+
+        if (allowed.includes(origin)) {
+          callback(null, true);
+        } else {
+          console.warn(`[WS CORS] Origen bloqueado: ${origin}`);
+          callback(new Error(`WS CORS: origen no permitido → ${origin}`));
+        }
+      },
       credentials: true,
       methods: ['GET', 'POST'],
     },
