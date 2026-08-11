@@ -21,14 +21,14 @@ export class ComedorQueueManager {
     this.targetUtilization = config.target || 0.85; // Margen de seguridad del 15%
 
     // Tiempo de escaneo en la entrada (cuello de botella real del sistema)
-    // Normal: 6 seg con escáner digital / Retraso: 60 seg con validación manual
-    this.normalMins  = 0.1; // 6 segundos
-    this.delayedMins = 1.0; // 60 segundos
+    // Normal: 6 seg con escáner digital / Retraso: 15 seg con validación prudente
+    this.normalMins  = 0.1;  // 6 segundos
+    this.delayedMins = 0.25; // 15 segundos
     this.currentMins = this.normalMins;
 
     // Tiempo base del sistema (desde que entra hasta que se sienta)
     this.normalBaseMins  = 4.0; // 4 minutos
-    this.delayedBaseMins = 8.0; // 8 minutos
+    this.delayedBaseMins = 5.0; // 5 minutos
     this.currentBaseMins = this.normalBaseMins;
   }
 

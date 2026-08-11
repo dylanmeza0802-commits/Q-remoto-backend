@@ -18,19 +18,26 @@ export const TurnService = {
     if (myTurn.queueId !== nextTurn.queueId) throw new Error('Turnos en filas distintas');
 
     // Intercambiar tiempos de creación para cambiar posición en la fila
-    const myCreatedAt   = myTurn.createdAt;
-    const nextCreatedAt = nextTurn.createdAt;
+    let newMyCreatedAt   = nextTurn.createdAt;
+    let newNextCreatedAt = myTurn.createdAt;
+
+    // Garantizar que newMyCreatedAt sea posterior a newNextCreatedAt
+    if (newMyCreatedAt.getTime() <= newNextCreatedAt.getTime()) {
+      newMyCreatedAt = new Date(newNextCreatedAt.getTime() + 1000);
+    }
 
     await prisma.turn.update({
       where: { id: myTurnId },
-      data: { createdAt: nextCreatedAt, cedido: true },
+      data: { createdAt: newMyCreatedAt, cedido: true },
     });
     await prisma.turn.update({
       where: { id: swapWithId },
-      data: { createdAt: myCreatedAt },
+      data: { createdAt: newNextCreatedAt },
     });
 
-    await prisma.queue.findUnique({ where: { id: myTurn.queueId } });
+    const { QueueService } = await import('../queue/queue.service.js');
+    await QueueService.refreshQueueCache(myTurn.queueId);
+
     return { ...myTurn, queueId: myTurn.queueId };
   },
 };

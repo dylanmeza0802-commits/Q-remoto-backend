@@ -140,8 +140,8 @@ export default function AdminPanel() {
                 </span>
               </div>
               {waiting.slice(0, 4).map((t, i) => {
-                const mins     = q.isDelayed ? 1.0 : 0.1;
-                const baseMins = q.isDelayed ? 8.0 : 4.0;
+                const mins     = q.isDelayed ? 0.25 : 0.1;
+                const baseMins = q.isDelayed ? 5.0 : 4.0;
                 let timeText = "Próximo";
                 if (i > 0) {
                   const waitMins = baseMins + (i * mins);

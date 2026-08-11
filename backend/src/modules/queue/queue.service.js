@@ -49,17 +49,17 @@ export const QueueService = {
 
     /**
      * Tiempo de cuello de botella calibrado para 2500 alumnos en 240 minutos:
-     * - Normal:  25 seg/alumno (promedio general) -> ~0.1 min (6 seg) escaneo
-     * - Retraso: 60 seg/alumno -> 1.0 min (validación manual, fallo del sistema)
+     * - Normal:  ~0.1 min (6 seg) escaneo
+     * - Retraso: ~0.25 min (15 seg) validación prudente
      */
-    const bottleneckMin = queue.isDelayed ? 1.0 : 0.1;
+    const bottleneckMin = queue.isDelayed ? 0.25 : 0.1;
     
     /**
      * Tiempo base del sistema (desde que entra hasta que se sienta)
-     * - Normal: 4 minutos (recibir bandeja, servir comida)
-     * - Retraso: 8 minutos (cambio de ollas, contratiempos)
+     * - Normal: 4.0 minutos
+     * - Retraso: 5.0 minutos (ajuste realista por contratiempos)
      */
-    const baseMin = queue.isDelayed ? 8.0 : 4.0;
+    const baseMin = queue.isDelayed ? 5.0 : 4.0;
     
     const waitMinutes = Math.round(baseMin + (position * bottleneckMin));
 

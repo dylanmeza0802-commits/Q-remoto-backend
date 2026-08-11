@@ -3,8 +3,8 @@ import { useQueueStore } from "../store/queueStore";
 export default function QueueDisplay({ turns = [] }) {
   const { isDelayed, activeQueue } = useQueueStore();
   const isDelayedNow  = isDelayed || activeQueue?.isDelayed;
-  const minsPerPerson = isDelayedNow ? 1.0 : 0.1; // 0.1 = 6 seg escáner digital / 1.0 = 60 seg manual
-  const baseMins      = isDelayedNow ? 8.0 : 4.0;
+  const minsPerPerson = isDelayedNow ? 0.25 : 0.1; // 0.1 = 6 seg / 0.25 = 15 seg
+  const baseMins      = isDelayedNow ? 5.0 : 4.0;
 
   return (
     <div className="card">

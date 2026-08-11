@@ -10,11 +10,16 @@ export default function JoinQueue() {
   const [selected, setSelected] = useState(null);
   const [loading,  setLoading]  = useState(false);
   const [showPwModal, setShowPwModal] = useState(false);
-  const { setMyTurn } = useQueueStore();
+  const { myTurn, setMyTurn } = useQueueStore();
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (myTurn?.queueId) {
+      navigate(`/queue/${myTurn.queueId}`, { replace: true });
+      return;
+    }
+
     http.get("/queues")
       .then((r) => setQueues(r.data))
       .catch(() =>
@@ -23,7 +28,7 @@ export default function JoinQueue() {
           { id:"q1", name:"Fila 1 — Piso 1", laneNumber:1, isDelayed:false, turns:[] },
         ])
       );
-  }, []);
+  }, [myTurn]);
 
   const handleJoin = async () => {
     if (!selected) return;
@@ -103,8 +108,8 @@ export default function JoinQueue() {
               {q.turns?.length ?? 0} personas · {(() => {
                 const len = q.turns?.length ?? 0;
                 if (len === 0) return "0 min espera";
-                const baseMins = q.isDelayed ? 8.0 : 4.0;
-                const waitMins = baseMins + (len * (q.isDelayed ? 1.0 : 0.1));
+                const baseMins = q.isDelayed ? 5.0 : 4.0;
+                const waitMins = baseMins + (len * (q.isDelayed ? 0.25 : 0.1));
                 const m = Math.floor(waitMins);
                 const s = Math.round((waitMins % 1) * 60);
                 return m === 0 ? `~${s} seg espera` : (s === 0 ? `~${m} min espera` : `~${m} min ${s} s espera`);

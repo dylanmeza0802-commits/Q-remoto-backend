@@ -23,11 +23,11 @@ export default function StudentView() {
     ? waitingTurns.findIndex((t) => t.id === myTurn.id) + 1
     : null;
 
-  // Tiempo por alumno en cuello de botella: 0.1 min (6 seg) normal / 1.0 min (60 seg) manual
-  // Tiempo base del sistema (pipeline): 4.0 min normal / 8.0 min manual
+  // Tiempo por alumno en cuello de botella: 0.1 min (6 seg) normal / 0.25 min (15 seg) con retraso
+  // Tiempo base del sistema (pipeline): 4.0 min normal / 5.0 min con retraso
   const isDelayedNow  = activeQueue?.isDelayed || isDelayed;
-  const minsPerPerson = isDelayedNow ? 1.0 : 0.1;
-  const baseMins      = isDelayedNow ? 8.0 : 4.0;
+  const minsPerPerson = isDelayedNow ? 0.25 : 0.1;
+  const baseMins      = isDelayedNow ? 5.0 : 4.0;
   const waitMinutes   = myPosition > 0 ? Math.round((baseMins + (myPosition - 1) * minsPerPerson) * 10) / 10 : 0;
 
   // turno siguiente al mío (para ceder)
@@ -112,10 +112,6 @@ export default function StudentView() {
           </button>
         </div>
       )}
-
-      <button className="btn btn-ghost" style={{ marginTop:8 }} onClick={() => navigate("/join")}>
-        ← Volver a filas
-      </button>
 
       {/* Modal de cesión */}
       {showCedeModal && nextTurn && (
